@@ -1,0 +1,409 @@
+================================================================================
+SHERPA STT "RECONNECTING FOREVER" — INVESTIGATION REPORT
+================================================================================
+Repository : E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main
+Date       : 2026-11-06
+Scope      : Investigation only. NO code or UI was changed.
+Runtime    : Electron 45.2.3, sherpa-onnx-node 2.0.1, Windows (win32)
+
+--------------------------------------------------------------------------------
+1. EXECUTIVE SUMMARY
+--------------------------------------------------------------------------------
+The app is NOT stuck in a Sherpa reconnect loop. SherpaSTT contains no retry
+or reconnect logic at all. What the user sees ("STT reconnecting" indefinitely)
+is a STICKY RENDERER STATE that is only cleared by a final transcript event,
+combined with a VAD decoder bug that prevents any transcript from ever being
+produced.
+
+The decisive defect is in SherpaAutoService.drainSegments():
+
+    segment = vad.front();   // <-- src/main/services/SherpaAutoService.ts:268
+
+sherpa-onnx-node's Vad.front(enableExternalBuffer = true) defaults to true.
+On this build, calling it with the default throws:
+
+    Error: External buffers are not allowed
+
+drainSegments() catches that error, logs it, and `break`s BEFORE calling
+vad.pop(). The VAD queue therefore never drains, no segment is ever decoded,
+no transcript event is ever emitted, and the renderer's one-way STT status
+machine never receives the "connected" transition that would clear
+"Reconnecting".
+
+Reproduced in a real Electron main process:
+  - vad.front()      -> throws "External buffers are not allowed"
+  - vad.front(false) -> works, decodes synthesized speech correctly
+  - vad.pop() must still be called afterwards to advance the queue.
+
+Two secondary amplifiers make the symptom permanent and opaque:
+  a) SherpaAutoService swallows all VAD/decode errors internally, so the
+     adapter never emits 'error' and main.ts never sets 'failed'.
+  b) main.ts only broadcasts state='connected' from a FINAL transcript
+     (electron/main.ts:1333-1345). There is no 'connected' broadcast on
+     start / reconfigure / session reset, so any earlier 'reconnecting'
+     state is sticky.
+
+Confidence in the primary root cause: 95%.
+
+--------------------------------------------------------------------------------
+2. CONFIRMED EVIDENCE (EMPIRICAL PROBES)
+--------------------------------------------------------------------------------
+All probes were read-only scripts placed in:
+  C:\Users\Sanket-PC\AppData\Local\Temp\opencode\
+
+2.1 Native module / ABI
+  - Electron 45.2.3: process.versions.modules = 150, napi = 10.
+  - require('sherpa-onnx-node') loads successfully under plain Node AND under
+    a real Electron main process (electron-main-probe.js).
+  - Model files exist; OfflineRecognizer constructs; Silero VAD constructs.
+
+2.2 VAD decode
+  - sherpa-model-probe.js / sherpa-speech-probe2.js load the real models and
+    feed speech-test.wav (synthesized speech).
+  - vad.front() with default argument throws:
+        [SherpaAuto] Failed to read VAD segment: Error: External buffers are not allowed
+  - vad.front(false) returns a valid SpeechSegment; recognizer.decode() then
+    returns the correct transcript text.
+  - Confirms the model, recognizer, and audio data are all fine. The failure
+    is isolated to the buffer-access contract of Vad.front().
+
+2.3 ORT DLL order
+  - Loading onnxruntime-node@1.30.0 FIRST works; Sherpa then binds to the
+    already-loaded 1.30.0 DLLs.
+  - Loading Sherpa FIRST makes onnxruntime-node fail with:
+        The operating system cannot run %1
+  - The current app loads ORT first (main.ts -> ./llm -> IntentClassifier ->
+    EmbeddingEngine), so this conflict is NOT the active cause in the current
+    build — but it is a real packaging/load-order landmine.
+
+2.4 Reconnect logic
+  - electron/audio/SherpaSTT.ts: no retry, no backoff, no reconnect loop.
+  - Contrast: electron/audio/NativelyProSTT.ts genuinely reconnects forever.
+    If CredentialsManager self-heals provider to 'natively', the visible
+    "Reconnecting" may come from that provider instead.
+
+--------------------------------------------------------------------------------
+3. PIPELINE STAGE-BY-STAGE ANALYSIS
+--------------------------------------------------------------------------------
+Format per stage:
+  EXPECTED / REQUIRED LOGS / FAILURE SYMPTOMS / CODE LOCATIONS / VALIDATION
+
+STAGE 0 — Provider selection
+  Expected
+    createSTTProvider(speaker) returns a SherpaSTT instance when the persisted
+    provider is 'sherpa'. No silent fallback to a different provider unless
+    explicitly configured.
+  Required logs
+    [Main] STT provider is 'none' ... (only when disabled)
+    [Main] Using SherpaSTT (sherpa-onnx) for <speaker>
+  Failure symptoms
+    UI shows "Reconnecting" but logs show "Using NativelyProSTT" or nothing.
+    getSttProvider() returns 'natively' or 'none' despite the settings UI.
+  Code locations
+    electron/main.ts:1071  createSTTProvider()
+    electron/main.ts:1169-1175  Sherpa branch
+    electron/services/CredentialsManager.ts  getSttProvider() self-heal none->natively
+    src/components/settings/NativelyApiSettings.tsx  saving key calls setSttProvider('natively')
+    electron/ipcHandlers.ts  set-stt-provider / set-natively-api-key
+  Validation
+    window.electronAPI.getSttProvider()  -> must be "sherpa"
+    Check stt-status payload.provider in DevTools console.
+    Grep main-process log for "Using SherpaSTT".
+
+STAGE 1 — Adapter construction and native module load
+  Expected
+    SherpaSTT imports sherpa-onnx-node successfully under Electron ABI 150.
+  Required logs
+    Any load error thrown from the constructor / require path is logged.
+  Failure symptoms
+    "Cannot find module", NODE_MODULE_VERSION mismatch, or a missing
+    sherpa-onnx.node / DLL error at startup.
+  Code locations
+    electron/audio/SherpaSTT.ts (top-level import)
+    node_modules/sherpa-onnx-node/
+  Validation
+    Probe: node -e "console.log(require('sherpa-onnx-node'))" (plain Node)
+    Probe: electron-main-probe.js (Electron main process)
+    Inspect stderr for NODE_MODULE_VERSION / "not a valid Win32 application".
+
+STAGE 2 — Model load and recognizer init
+  Expected
+    OfflineRecognizer + Silero VAD initialize from the configured model dirs.
+  Required logs
+    SherpaAutoService init logs (model paths, recognizer created).
+  Failure symptoms
+    Missing model file, asar packaging path wrong, ONNX session create error.
+  Code locations
+    src/main/services/SherpaAutoService.ts  constructor / init
+    package.json  asarUnpack / extraResources
+  Validation
+    sherpa-model-probe.js loads the same model paths.
+    Confirm files exist on disk inside app.asar.unpacked or extraResources.
+
+STAGE 3 — Audio write into adapter
+  Expected
+    SherpaSTT.write(float32Chunk) forwards 16 kHz mono Float32 samples into
+    sherpaAutoService.processChunk().
+  Required logs
+    None by default (too chatty); a one-time sample-rate/chunk log helps.
+  Failure symptoms
+    Wrong sample rate (48 kHz fed where 16 kHz expected), empty chunks, or
+    the mic path never calling setSampleRate successfully.
+  Code locations
+    electron/audio/SherpaSTT.ts  write()
+    electron/main.ts  _sysSttRateApplied / _micSttRateApplied
+    electron/audio/whisper/audioResampler.ts  Int16LE -> 16 kHz Float32
+  Validation
+    Log chunk length and computed RMS; verify non-silent audio.
+    Verify getSampleRate() and setSampleRate() actually applied.
+
+STAGE 4 — VAD feed + segment drain  *** PRIMARY FAILURE POINT ***
+  Expected
+    processChunk -> vad.acceptWaveform -> drainSegments:
+        while (!vad.isEmpty()) {
+          segment = vad.front();   // must not throw
+          vad.pop();               // must always advance
+          decode(segment.samples)
+        }
+  Required logs
+    On failure currently:
+      [SherpaAuto] Failed to read VAD segment: Error: External buffers are not allowed
+  Failure symptoms
+    The above log repeats for every chunk. No transcript is ever produced.
+    VAD queue stays non-empty; decode never runs.
+  Code locations
+    src/main/services/SherpaAutoService.ts:200-215  processChunk
+    src/main/services/SherpaAutoService.ts:260-281  drainSegments
+    src/main/services/SherpaAutoService.ts:268      vad.front()
+    src/main/services/SherpaAutoService.ts:271      break (skips pop)
+    src/main/services/SherpaAutoService.ts:273      vad.pop()
+    node_modules/sherpa-onnx-node/vad.js          front(enableExternalBuffer = true)
+  Validation
+    In an Electron main probe, call vad.front() and vad.front(false) on a
+    segment; the former throws, the latter returns samples.
+    Reproduced by: sherpa-speech-probe2.js
+  Fix direction (NOT applied)
+    Use vad.front(false) (owned/copy buffer), then vad.pop(). Alternatively
+    keep external buffers but read samples only inside the valid native
+    lifetime — the safe minimal change is front(false).
+
+STAGE 5 — Decoder -> transcript text
+  Expected
+    recognizer.createStream -> acceptWaveform({samples, sampleRate:16000})
+    -> decode -> getResult().text
+  Required logs
+    [SherpaAuto] decode failed: ... on error (already present).
+  Failure symptoms
+    Empty text, wrong language, or decode throw. Here it is never reached
+    because Stage 4 breaks first.
+  Code locations
+    src/main/services/SherpaAutoService.ts:283-296  decodeSegment
+    SAMPLE_RATE constant must be 16000.
+  Validation
+    sherpa-model-probe.js decodes speech-test.wav to expected text.
+
+STAGE 6 — Adapter emitTranscript
+  Expected
+    Non-empty text -> emit('transcript', { text, isFinal, confidence })
+  Required logs
+    None (event-driven).
+  Failure symptoms
+    No 'transcript' events at all. This is the observed behavior and is a
+    downstream consequence of Stage 4.
+  Code locations
+    electron/audio/SherpaSTT.ts  emitTranscript()
+  Validation
+    Attach stt.on('transcript', console.log) in main process probe.
+
+STAGE 7 — Main process IPC forward
+  Expected
+    transcript handler forwards to renderer via native-audio-transcript and
+    updates stt-status to 'connected' on final segments.
+  Required logs
+    Renderer receives native-audio-transcript.
+  Failure symptoms
+    No transcript UI updates.
+  Code locations
+    electron/main.ts:1205-1246  transcript forwarding
+    electron/main.ts:1333-1345  connected broadcast on final transcript
+  Validation
+    DevTools: window.electronAPI.onNativeAudioTranscript(...)
+
+STAGE 8 — Renderer status state machine  *** STICKY STATE AMPLIFIER ***
+  Expected
+    "Reconnecting" is transient; a connected/recovered event clears it.
+  Required logs
+    stt-status events: { state, provider, channel, ... }
+  Failure symptoms
+    "Reconnecting" persists forever because:
+      - initial renderer STT status is 'connected'
+      - error handler sets 'reconnecting' (main.ts:1320)
+      - only a FINAL transcript sets 'connected' (main.ts:1333-1345)
+      - no 'connected' is emitted on start / reconfigure / session reset
+      - onSessionReset does not reset stt state
+  Code locations
+    src/components/NativelyInterface.tsx:361-364  initial STT state
+    src/components/NativelyInterface.tsx:191-197  getSttSummary
+    src/components/NativelyInterface.tsx:961-965  onSttStatusChanged
+    src/components/NativelyInterface.tsx:949-952  onSessionReset (does not reset stt)
+    src/components/ui/RollingTranscript.tsx         "Reconnecting" label
+  Validation
+    DevTools console: log every stt-status event. Observe a single
+    'reconnecting' with no subsequent 'connected'.
+
+STAGE 9 — Reconnect loop (claimed vs actual)
+  Expected (per user report)
+    Sherpa retrying the connection indefinitely.
+  Actual
+    SherpaSTT has zero reconnect logic. The only genuine infinite reconnect
+    loop is NativelyProSTT. If the effective provider is 'natively', the UI
+    label is literally accurate but unrelated to Sherpa.
+  Code locations
+    electron/audio/SherpaSTT.ts        no loop
+    electron/audio/NativelyProSTT.ts   real indefinite reconnect loop
+  Validation
+    Confirm provider first (Stage 0) before attributing the symptom to Sherpa.
+
+--------------------------------------------------------------------------------
+4. RANKED ROOT CAUSES (CONFIDENCE)
+--------------------------------------------------------------------------------
+ 1. 95%  vad.front() external-buffer incompatibility
+         SherpaAutoService.drainSegments() calls vad.front() with the default
+         enableExternalBuffer=true; it throws "External buffers are not
+         allowed"; the catch breaks before vad.pop(); the queue never drains;
+         no segment is decoded; no transcript is ever emitted.
+         Evidence: reproduced in Electron; vad.front(false) decodes correctly.
+
+ 2. 90%  Sticky one-way STT status in the renderer
+         'connected' is broadcast only on a FINAL transcript. Start,
+         reconfigure, and session reset never re-broadcast 'connected'.
+         Combined with cause #1 (no transcript ever), "Reconnecting" is
+         permanent and survives session resets.
+
+ 3. 85%  Swallowed service errors hide the failure
+         SherpaAutoService catches VAD/decode errors in processChunk,
+         drainSegments, decodeSegment, and flush, returning '' instead of
+         emitting 'error'. main.ts therefore never sets 'failed', and the UI
+         gets no actionable error — only an endless "Reconnecting".
+
+ 4. 50%  Effective provider is not Sherpa
+         CredentialsManager self-heals 'none' -> 'natively', and saving a
+         Natively API key calls setSttProvider('natively'). If so,
+         NativelyProSTT's genuine reconnect loop is what the user sees.
+         Must be ruled out via getSttProvider() and stt-status.provider.
+
+ 5. 30%  Sample-rate flag bug (mic path)
+         _micSttRateApplied is set true even when getSampleRate() returns 0;
+         setSampleRate ignores non-positive values, leaving the 48 kHz
+         default. System path self-heals via sample_rate_changed; mic path
+         does not. Would cause degraded/empty decoding, not the sticky state.
+
+ 6. 20%  Missing model in the packaged build
+         asar/extraResources path mismatch means the recognizer cannot
+         initialize. Would typically surface at init, not as a silent
+         "Reconnecting".
+
+ 7. 15%  ORT DLL load-order conflict
+         Real: Sherpa-first breaks onnxruntime-node with "The operating
+         system cannot run %1"; ORT-first works. Current load order is
+         ORT-first, so not the active cause today, but fragile.
+
+ 8. <5%  Native module / Electron ABI load failure
+         Ruled out empirically: modules=150 / napi=10, module loads and
+         decodes under Electron 45.2.3.
+
+ 9.  0%  Sherpa reconnect loop
+         No such code exists in SherpaSTT.
+
+--------------------------------------------------------------------------------
+5. VALIDATION COMMANDS
+--------------------------------------------------------------------------------
+Run from the repository root unless noted.
+
+5.1 Confirm the effective provider (in the app DevTools console)
+    await window.electronAPI.getSttProvider()
+
+5.2 Capture stt-status transitions (DevTools console)
+    window.electronAPI.onSttStatusChanged((p) => console.log('STT STATUS', p))
+
+5.3 Confirm the decisive VAD error (main-process log)
+    Select-String -Path <app-log> -Pattern "External buffers are not allowed"
+    Grep equivalent:
+      grep -R "External buffers are not allowed" <log-dir>
+
+5.4 Reproduce VAD front() behavior (real Electron main)
+    npx electron C:\Users\Sanket-PC\AppData\Local\Temp\opencode\sherpa-speech-probe2.js
+    Expected:
+      front()      -> Error: External buffers are not allowed
+      front(false) -> valid segment + decoded text
+
+5.5 Verify model + decode independently
+    node C:\Users\Sanket-PC\AppData\Local\Temp\opencode\sherpa-model-probe.js
+
+5.6 Verify ORT load order
+    node C:\Users\Sanket-PC\AppData\Local\Temp\opencode\ort-conflict-probe.js
+
+5.7 Verify native module under Electron ABI
+    npx electron C:\Users\Sanket-PC\AppData\Local\Temp\opencode\electron-main-probe.js
+    Expected: modules=150, napi=10, require succeeds.
+
+5.8 Confirm SherpaSTT has no reconnect logic
+    Select-String -Path electron/audio/SherpaSTT.ts -Pattern "reconnect|retry|backoff"
+    Expected: no matches.
+
+5.9 Confirm the sticky-state code path
+    Select-String -Path electron/main.ts -Pattern "state: 'connected'"
+    Only occurrence should be inside the transcript handler (~line 1338).
+
+--------------------------------------------------------------------------------
+6. RECOMMENDED FIXES (NOT APPLIED)
+--------------------------------------------------------------------------------
+Priority 1 — Decode path (unblocks transcription)
+  - In drainSegments(), call vad.front(false) and always vad.pop() in a
+    finally block so the queue advances even on a read failure.
+  - Keep decodeSegment's error handling, but surface a typed error upward.
+
+Priority 2 — Error propagation
+  - Let SherpaAutoService emit/throw a real error (or return a status object)
+    so SherpaSTT can emit 'error'. Today all failures return ''.
+
+Priority 3 — Status state machine
+  - Broadcast state='connected' on successful STT start/reconfigure.
+  - Reset STT status on session reset (onSessionReset should clear stt).
+  - Optionally include a 'starting' state distinct from 'reconnecting'.
+
+Priority 4 — Provider determinism
+  - Do not silently self-heal 'none' -> 'natively' when the user explicitly
+    selected Sherpa. Log the resolved provider in stt-status.
+
+Priority 5 — Sample-rate flags
+  - Only set _micSttRateApplied / _sysSttRateApplied when
+    setSampleRate() actually received a positive rate.
+
+Priority 6 — Packaging / ORT
+  - Keep ORT-first load order, or pin/align onnxruntime versions between
+    onnxruntime-node and sherpa-onnx-node.
+  - Verify asarUnpack/extraResources include the Sherpa model dirs.
+
+--------------------------------------------------------------------------------
+7. ARTIFACTS
+--------------------------------------------------------------------------------
+Report:
+  C:\Users\Sanket-PC\AppData\Local\Temp\opencode\sherpa-stt-reconnect-investigation-report.txt
+
+Probe scripts:
+  ...\sherpa-speech-probe2.js      reproduces vad.front() failure + front(false) success
+  ...\sherpa-model-probe.js        model/recognizer/VAD load + decode
+  ...\ort-conflict-probe.js        ORT vs Sherpa load-order conflict
+  ...\electron-main-probe.js       Electron ABI + require check
+  ...\sherpa-init-test.js          Sherpa init
+  ...\speech-test.wav              synthesized test speech
+
+Captured logs:
+  ...\speech-probe2.txt            contains the "External buffers are not allowed" signature
+  ...\ort-first.txt, ...\sherpa-first.txt, ...\ort-first-decode.txt
+  ...\probe-node.txt, ...\probe-electron.txt, ...\model-electron.txt
+
+================================================================================
+END OF REPORT
+================================================================================

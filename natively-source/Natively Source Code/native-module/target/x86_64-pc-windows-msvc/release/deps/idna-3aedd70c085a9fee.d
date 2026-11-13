@@ -1,0 +1,10 @@
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\idna-3aedd70c085a9fee.d: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\deprecated.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\punycode.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\uts46.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libidna-3aedd70c085a9fee.rlib: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\deprecated.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\punycode.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\uts46.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libidna-3aedd70c085a9fee.rmeta: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\deprecated.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\punycode.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\uts46.rs
+
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\lib.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\deprecated.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\punycode.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\idna-1.1.0\src\uts46.rs:

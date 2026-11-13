@@ -1,0 +1,10 @@
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\wasapi-ad9e9284e757a020.d: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\api.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\events.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\waveformat.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libwasapi-ad9e9284e757a020.rlib: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\api.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\events.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\waveformat.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libwasapi-ad9e9284e757a020.rmeta: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\api.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\events.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\waveformat.rs
+
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\lib.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\api.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\events.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\wasapi-0.13.0\src\waveformat.rs:

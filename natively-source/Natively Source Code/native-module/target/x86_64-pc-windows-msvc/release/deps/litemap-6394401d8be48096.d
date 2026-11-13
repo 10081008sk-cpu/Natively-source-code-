@@ -1,0 +1,10 @@
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\litemap-6394401d8be48096.d: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\map.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\mod.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\slice_impl.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\liblitemap-6394401d8be48096.rlib: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\map.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\mod.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\slice_impl.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\liblitemap-6394401d8be48096.rmeta: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\map.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\mod.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\slice_impl.rs
+
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\lib.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\map.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\mod.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\litemap-0.8.1\src\store\slice_impl.rs:

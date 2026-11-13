@@ -1,0 +1,9 @@
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\primal_check-5de5fd5bb3a12d09.d: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\perfect_power.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\is_prime.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libprimal_check-5de5fd5bb3a12d09.rlib: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\perfect_power.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\is_prime.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libprimal_check-5de5fd5bb3a12d09.rmeta: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\perfect_power.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\is_prime.rs
+
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\lib.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\perfect_power.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\primal-check-0.3.4\src\is_prime.rs:

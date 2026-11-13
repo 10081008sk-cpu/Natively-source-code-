@@ -1,0 +1,10 @@
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\dasp_sample-57ed12b718c726fb.d: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\conv.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\ops.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\types.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libdasp_sample-57ed12b718c726fb.rlib: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\conv.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\ops.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\types.rs
+
+E:\Project\natively-cluely-ai-assistant-main\natively-cluely-ai-assistant-main\native-module\target\x86_64-pc-windows-msvc\release\deps\libdasp_sample-57ed12b718c726fb.rmeta: C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\lib.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\conv.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\ops.rs C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\types.rs
+
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\lib.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\conv.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\ops.rs:
+C:\Users\Sanket-PC\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\dasp_sample-0.11.0\src\types.rs:
