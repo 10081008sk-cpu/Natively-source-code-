@@ -1,0 +1,155 @@
+
+name: Import Natively Release Source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download release ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download NativelyTrial \
+            --repo "$GITHUB_REPOSITORY" \
+            --pattern "Natively.Source.Code.zip" \
+            --dir "$RUNNER_TEMP"
+
+      - name: Extract source and create inventory
+        env:
+          ZIP_PATH: ${{ runner.temp }}/Natively.Source.Code.zip
+          WORKSPACE: ${{ github.workspace }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import stat
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          archive = Path(os.environ["ZIP_PATH"])
+          workspace = Path(os.environ["WORKSPACE"])
+          destination = workspace / "natively-source"
+          destination.mkdir(parents=True, exist_ok=True)
+
+          ignored_dirs = {
+              ".git", "node_modules", "dist", "build",
+              "out", "coverage", ".next", ".turbo",
+              ".vite", ".cache", "__pycache__"
+          }
+
+          ignored_extensions = {
+              ".pem", ".key", ".p12", ".pfx", ".keystore"
+          }
+
+          max_file_size = 95 * 1024 * 1024
+
+          copied = 0
+          skipped = []
+          inventory = []
+
+          with zipfile.ZipFile(archive) as z:
+              for info in z.infolist():
+                  if info.is_dir():
+                      continue
+
+                  name = info.filename.replace("\\", "/")
+                  relative = PurePosixPath(name)
+
+                  if relative.is_absolute() or ".." in relative.parts:
+                      skipped.append((name, info.file_size, "UNSAFE PATH"))
+                      continue
+
+                  parts = [p.lower() for p in relative.parts]
+                  basename = relative.name.lower()
+                  suffix = relative.suffix.lower()
+
+                  if any(p in ignored_dirs for p in parts):
+                      skipped.append((name, info.file_size, "GENERATED/DEPENDENCY FOLDER"))
+                      continue
+
+                  if (
+                      basename == ".env"
+                      or (basename.startswith(".env.") and
+                          basename not in {".env.example", ".env.sample"})
+                      or basename == ".npmrc"
+                      or basename in {"id_rsa", "id_ed25519", "credentials.json"}
+                      or suffix in ignored_extensions
+                  ):
+                      skipped.append((name, info.file_size, "POSSIBLE SECRET"))
+                      continue
+
+                  if info.file_size > max_file_size:
+                      skipped.append((name, info.file_size, "OVER 95 MiB"))
+                      continue
+
+                  mode = (info.external_attr >> 16) & 0o170000
+                  if stat.S_ISLNK(mode):
+                      skipped.append((name, info.file_size, "SYMLINK"))
+                      continue
+
+                  target = destination.joinpath(*relative.parts)
+                  target.parent.mkdir(parents=True, exist_ok=True)
+
+                  with z.open(info) as source, target.open("wb") as output:
+                      while True:
+                          chunk = source.read(1024 * 1024)
+                          if not chunk:
+                              break
+                          output.write(chunk)
+
+                  copied += 1
+                  inventory.append((name, info.file_size, "EXTRACTED"))
+
+          report = workspace / "NATIVELY_IMPORT_REPORT.md"
+
+          with report.open("w", encoding="utf-8") as f:
+              f.write("# Natively Release Import Report\n\n")
+              f.write(f"Extracted files: {copied}\n\n")
+              f.write(f"Skipped files: {len(skipped)}\n\n")
+              f.write("## File inventory\n\n")
+              f.write("| Status | Size (bytes) | Archive path |\n")
+              f.write("|---|---:|---|\n")
+
+              for name, size, status_text in inventory:
+                  f.write(f"| {status_text} | {size} | `{name}` |\n")
+
+              for name, size, reason in skipped:
+                  f.write(f"| SKIPPED: {reason} | {size} | `{name}` |\n")
+
+          print(f"Extracted {copied} files.")
+          print(f"Skipped {len(skipped)} files.")
+          print(f"Report created: {report}")
+
+          if copied == 0:
+              raise SystemExit("No files were extracted. Check the ZIP.")
+          PY
+
+      - name: Publish to a separate branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          BRANCH="source-audit-NativelyTrial-${GITHUB_RUN_NUMBER}"
+          git switch -c "$BRANCH"
+
+          git add -f natively-source NATIVELY_IMPORT_REPORT.md
+
+          if git diff --cached --quiet; then
+            echo "No files to publish."
+            exit 1
+          fi
+
+          git commit -m "Import NativelyTrial source for audit"
+          git push origin "HEAD:refs/heads/$BRANCH"
+
+          echo "Published branch: $BRANCH"
